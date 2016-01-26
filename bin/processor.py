@@ -19,7 +19,7 @@ logger = logging.getLogger()
 class Processor():
     def run(self):
         r = redis.StrictRedis(**settings.REDIS_OPTIONS)
-        r.delete('unicrawler:data')
+        r.delete('unicrawler:data:topics')
         while True:
             try:
                 data = r.brpop('unicrawler:data:topics')

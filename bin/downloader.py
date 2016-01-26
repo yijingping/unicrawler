@@ -34,7 +34,9 @@ class Downloader():
                 data = json.loads(data[1])
                 print data["url"]
                 rsp = requests.get(data["url"], headers=HEADER)
+                rsp.encoding = rsp.apparent_encoding
                 data['body'] = rsp.text
+                logging.info(rsp.encoding)
                 logging.debug(data)
                 r.lpush('unicrawler:urls-body', json.dumps(data))
             except Exception as e:

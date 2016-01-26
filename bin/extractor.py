@@ -21,7 +21,7 @@ logger = logging.getLogger()
 
 class Extractor():
     def extract(self, tree, rules):
-        res = None
+        res = []
         for rule in rules:
             if rule["kind"] == "xpath":
                 res = tree.xpath(rule["data"])
@@ -79,9 +79,11 @@ class Extractor():
                 }
                 for item in rules:
                     col = item["key"]
+                    print col
                     col_rules = item["rules"]
                     col_value = self.extract(tree, col_rules)
                     result[col] = col_value
+                    print col
 
                 r.lpush('unicrawler:data:%s' % data['seed_data'], json.dumps(result))
                 logger.debug('extracted:%s' % result)

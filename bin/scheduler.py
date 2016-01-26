@@ -24,9 +24,14 @@ class Scheduler():
         while True:
             now = datetime.now()
             for item in Seed.objects.filter(status=Seed.STATUS_ENABLE).order_by('-weight'):
-                rules = IndexRule.objects.filter(seed=item, next_crawl_time__lte=now)
+                rules = IndexRule.objects.filter(seed=item, status=IndexRule.STATUS_ENABLE, next_crawl_time__lte=now)
                 for rule in rules:
-                    deital_rule = DetailRule.objects.get(index_rule=rule)
+                    try:
+                        deital_rule = DetailRule.objects.get(index_rule=rule)
+                    except DetailRule.DoesNotExist as e:
+                        print e
+                        continue
+
                     data = {
                         'url': rule.url, 'kind': KIND_LIST_URL, 'rule_id': rule.pk,
                         'list_rules': rule.list_rules,
