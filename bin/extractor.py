@@ -11,13 +11,29 @@ django.setup()
 import json
 import redis
 from lxml import etree
-from cores.models import Seed, Rule
+from cores.models import IndexRule, DetailRule
+from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
 from io import StringIO
+from django.conf import settings
 
+import logging
+logger = logging.getLogger()
 
 class Extractor():
+    def extract(self, tree, rules):
+        res = None
+        for rule in rules:
+            if rule["kind"] == "xpath":
+                res = tree.xpath(rule["data"])
+            elif rule["kind"] == "python":
+                g, l = {}, {"in_val": res}
+                exec(rule["data"], g, l)
+                res = l["out_val"]
+
+        return res
+
     def run(self):
-        r = redis.StrictRedis(host='localhost', port=6379, db=3)
+        r = redis.StrictRedis(**settings.REDIS_OPTIONS)
         r.delete('unicrawler:urls-body')
         while True:
             try:
@@ -27,56 +43,48 @@ class Extractor():
                 continue
             #print data
             data = json.loads(data[1])
-            htmlparser = etree.HTMLParser()
             body = data['body']
+            htmlparser = etree.HTMLParser()
             tree = etree.parse(StringIO(body), htmlparser)
-            # 列表页
-            if data["kind"] == 0:
+            # 如果当前接卸的页面是列表页
+            if data["kind"] == KIND_LIST_URL:
                 # 找下一页
-                next_urls = tree.xpath(data['next_url_rules'])
+                next_urls = self.extract(tree, data["next_url_rules"])
                 for item in next_urls:
                     item_data = data.copy()
                     item_data['url'] = item
-                    print 'list:', data['url']
-                    r.lpush('unicrawler:urls', json.dumps(item_data))
+                    item_data['fresh_pages'] -= 1
+                    if item_data['fresh_pages'] >= 0:
+                        logger.debug('list:%s' % data['url'])
+                        r.lpush('unicrawler:urls', json.dumps(item_data))
 
                 # 找详情页
-                detail_urls = tree.xpath(data['list_rules'])
-                #print 'detail_urls:', detail_urls
+                detail_urls = self.extract(tree, data['list_rules'])
+                #logger.debug('detail_urls: %s' % detail_urls)
                 for item in detail_urls:
                     item_data = {
                         "url": item,
-                        'kind': 1,
-                        'seed_id': data['seed_id']
+                        'kind': KIND_DETAIL_URL,
+                        'rule_id': data['rule_id'],
+                        'detail_rules': data['detail_rules'],
+                        'seed_data': data['seed_data']
                     }
                     r.lpush('unicrawler:urls', json.dumps(item_data))
-            # 详情页
-            elif data["kind"] == 1:
-                print 'detail:', data['url']
-                rule = Rule.objects.get(seed_id=data['seed_id'])
-                seed = Seed.objects.get(pk=data['seed_id'])
-                schema = seed.schema
-                rules = json.loads(rule.data)
+            # 如果当前接卸的页面是详情页
+            elif data["kind"] == KIND_DETAIL_URL:
+                logger.debug('detail:%s' % data['url'])
+                rules = data['detail_rules']
                 result = {
-                    "seed_id": data['seed_id'],
                     "url": data['url']
                 }
-                table = json.loads(schema.data)
-                for col, format_ in table.iteritems():
-                    kind = rules[col]["kind"]
-                    if kind == "STRING":
-                        result[col] = rules[col]["data"]
-                    elif kind == "XPATH":
-                        _data = tree.xpath(rules[col]["rule"])
-                        if len(_data) > 0:
-                            result[col] = _data[0]
-                        else:
-                            result[col] = ""
-                    else:
-                        result[col] = ""
+                for item in rules:
+                    col = item["key"]
+                    col_rules = item["rules"]
+                    col_value = self.extract(tree, col_rules)
+                    result[col] = col_value
 
-                r.lpush('unicrawler:data', json.dumps(result))
-                print result
+                r.lpush('unicrawler:data:%s' % data['seed_data'], json.dumps(result))
+                logger.debug('extracted:%s' % result)
 
 
 if __name__ == '__main__':

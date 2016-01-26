@@ -1,11 +1,5 @@
 from django.contrib import admin
-from .models import Schema, Seed, Rule
-
-
-class SchemaAdmin(admin.ModelAdmin):
-    pass
-
-admin.site.register(Schema, SchemaAdmin)
+from .models import Seed, IndexRule, DetailRule
 
 
 class SeedAdmin(admin.ModelAdmin):
@@ -14,7 +8,13 @@ class SeedAdmin(admin.ModelAdmin):
 admin.site.register(Seed, SeedAdmin)
 
 
-class RuleAdmin(admin.ModelAdmin):
+class IndexRuleAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(Rule, RuleAdmin)
+admin.site.register(IndexRule, IndexRuleAdmin)
+
+
+class DetailRuleAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(DetailRule, DetailRuleAdmin)

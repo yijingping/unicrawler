@@ -1,45 +1,54 @@
 # -*- coding: utf-8 -*-
 __author__ = 'yijingping'
 from django.db import models
+from jsonfield import JSONField
+import collections
 
-
-class Schema(models.Model):
+class Seed(models.Model):
+    STATUS_ENABLE = 1
+    STATUS_DISABLE = 2
+    STATUS_CHOICES = (
+        (STATUS_ENABLE, '启用'),
+        (STATUS_DISABLE, '禁用')
+    )
     name = models.CharField(max_length=100, verbose_name='模板名称')
     desc = models.TextField(verbose_name='简介')
-    data = models.TextField(verbose_name='详细结构')
+    data = models.TextField(verbose_name='额外信息')
     weight = models.IntegerField(default=0, verbose_name='权重')
+    status = models.IntegerField(default=STATUS_ENABLE, choices=STATUS_CHOICES, verbose_name="是否启用")
 
     def __unicode__(self):
         return self.name
 
     class Meta:
-        verbose_name_plural = "模板"
+        verbose_name_plural = "种子"
 
 
-class Seed(models.Model):
-    schema = models.ForeignKey(Schema)
+class IndexRule(models.Model):
+    seed = models.ForeignKey(Seed)
     name = models.CharField(max_length=100, verbose_name='来源网站名称')
     site = models.CharField(max_length=100, verbose_name='来源网站域名')
     url = models.CharField(max_length=100, verbose_name='索引url')
-    list_rules = models.TextField(verbose_name='获取列表项的规则')
-    next_url_rules = models.TextField(verbose_name='下一页索引的规则列表')
+    list_rules = JSONField(verbose_name='获取列表项的规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
+    next_url_rules = JSONField(verbose_name='下一页索引的规则列表', load_kwargs={'object_pairs_hook': collections.OrderedDict})
     frequency = models.IntegerField(default=60, verbose_name='爬取频率,单位秒')
     update_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     next_crawl_time = models.DateTimeField(auto_now_add=True, verbose_name='下次爬取时间')
+    fresh_pages = models.IntegerField(default=2, verbose_name='爬取页面数')
 
     def __unicode__(self):
         return self.name
 
     class Meta:
-        verbose_name_plural = "来源种子"
+        verbose_name_plural = "索引和列表规则"
 
 
-class Rule(models.Model):
-    seed = models.ForeignKey(Seed)
-    data = models.TextField(verbose_name='详细规则')
+class DetailRule(models.Model):
+    index_rule = models.ForeignKey(IndexRule)
+    data = JSONField(verbose_name='详情页规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
 
     def __unicode__(self):
-        return '%s, %s' % (self.seed.name, self.seed.url)
+        return '%s, %s' % (self.index_rule.name, self.index_rule.url)
 
     class Meta:
         verbose_name_plural = "详情页爬取规则"
