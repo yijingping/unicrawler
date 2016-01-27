@@ -27,8 +27,11 @@ class Extractor():
                 res = tree.xpath(rule["data"])
             elif rule["kind"] == "python":
                 g, l = {}, {"in_val": res}
-                exec(rule["data"], g, l)
-                res = l["out_val"]
+                try:
+                    exec(rule["data"], g, l)
+                    res = l["out_val"]
+                except Exception as e:
+                    logger.exception(e)
 
         return res
 
