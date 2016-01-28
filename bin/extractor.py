@@ -53,6 +53,7 @@ class Extractor():
             if data["kind"] == KIND_LIST_URL:
                 # 找下一页
                 next_urls = self.extract(tree, data["next_url_rules"])
+                print 'next_urls: %s' % next_urls
                 for item in next_urls:
                     item_data = data.copy()
                     item_data['url'] = item
@@ -70,7 +71,7 @@ class Extractor():
                         'kind': KIND_DETAIL_URL,
                         'rule_id': data['rule_id'],
                         'detail_rules': data['detail_rules'],
-                        'seed_data': data['seed_data']
+                        'seed_id': data['seed_id']
                     }
                     r.lpush('unicrawler:urls', json.dumps(item_data))
             # 如果当前接卸的页面是详情页
@@ -78,7 +79,8 @@ class Extractor():
                 logger.debug('detail:%s' % data['url'])
                 rules = data['detail_rules']
                 result = {
-                    "url": data['url']
+                    "url": data['url'],
+                    "seed_id": data['seed_id']
                 }
                 for item in rules:
                     col = item["key"]
@@ -86,9 +88,8 @@ class Extractor():
                     col_rules = item["rules"]
                     col_value = self.extract(tree, col_rules)
                     result[col] = col_value
-                    print col
 
-                r.lpush('unicrawler:data:%s' % data['seed_data'], json.dumps(result))
+                r.lpush('unicrawler:data', json.dumps(result))
                 logger.debug('extracted:%s' % result)
 
 

@@ -37,7 +37,7 @@ class Scheduler():
                         'list_rules': rule.list_rules,
                         'next_url_rules': rule.next_url_rules,
                         'detail_rules': deital_rule.data,
-                        "seed_data": item.data,
+                        "seed_id": item.pk,
                         "fresh_pages": rule.fresh_pages
                     }
                     r.lpush('unicrawler:urls', json.dumps(data))

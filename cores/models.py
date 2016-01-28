@@ -13,7 +13,7 @@ class Seed(models.Model):
     )
     name = models.CharField(max_length=100, verbose_name='模板名称')
     desc = models.TextField(verbose_name='简介')
-    data = models.TextField(verbose_name='额外信息')
+    data = JSONField(verbose_name='存储数据配置', load_kwargs={'object_pairs_hook': collections.OrderedDict}, blank=True, default=[])
     weight = models.IntegerField(default=0, verbose_name='权重')
     status = models.IntegerField(default=STATUS_ENABLE, choices=STATUS_CHOICES, verbose_name="是否启用")
 

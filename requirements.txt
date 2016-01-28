@@ -4,5 +4,6 @@ requests==2.7.0
 lxml==3.4.4
 jsonfield==1.0.3
 redis==2.10.3
+torndb==0.3
 
 
