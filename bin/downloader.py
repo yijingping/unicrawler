@@ -13,7 +13,7 @@ import json
 import redis
 import requests
 from django.conf import settings
-from cores.models import Site
+from cores.models import Site, Proxy
 from random import sample
 
 import logging
@@ -30,9 +30,23 @@ class RequestsDownloaderBackend(object):
     def __init__(self, proxy=None):
         self.proxy = proxy
 
+    def format_proxies(self):
+        p = self.proxy
+        if self.proxy:
+            if p.user:
+                data = 'http://%s:%s@%s:%s' % (p.user, p.password, p.host, p.port)
+            else:
+                data = 'http://%s:%s' % (p.host, p.port)
+            return {
+                "http": data
+            }
+        else:
+            return None
+
     def download(self, url):
         header = sample(self.headers, 1)[0]
-        rsp = requests.get(url, headers=header)
+        proxies = self.format_proxies()
+        rsp = requests.get(url, headers=header, proxies=proxies)
         rsp.encoding = rsp.apparent_encoding
         return rsp.text
 
@@ -42,18 +56,34 @@ class BrowserDownloaderBackend(object):
         pass
 
 
+class MysqlProxyBackend(object):
+    def __init__(self):
+        proxy = Proxy.objects.order_by('?').first()
+        self.user = proxy.user
+        self.password = proxy.password
+        self.host = proxy.host
+        self.port = proxy.port
+
+    def __str__(self):
+        return ':'.join([str(self.user), str(self.password), str(self.host), str(self.port)])
+
+
+
 class Downloader(object):
     def __init__(self):
         self.redis = redis.StrictRedis(**settings.REDIS_OPTIONS)
 
-    def get_proxy(self):
-        return ''
+    def get_proxy(self, kind):
+        if kind == Site.PROXY_MYSQL:
+            return MysqlProxyBackend()
+        else:
+            return None
 
     def check_limit_speed(self, config):
         if config["limit_speed"] <= 0:
             return False, None
         else:
-            proxy = self.get_proxy()
+            proxy = self.get_proxy(config['proxy'])
             key = 'unicrawler:limit_speed:%s:%s' % (config['domain'], proxy)
             if self.redis.exists(key):
                 return True, proxy
@@ -91,7 +121,7 @@ class Downloader(object):
                     data.pop('site_config', None)
                     data['body'] = browser.download(data["url"])
 
-                    #logger.debug(data)
+                    logger.debug(data)
                     r.lpush('unicrawler:urls-body', json.dumps(data))
             except Exception as e:
                 print e
