@@ -103,26 +103,23 @@ class Downloader(object):
 
             try:
                 data = json.loads(resp_data[1])
-                set_config = data['site_config']
+                site_config = data['site_config']
                 logger.debug(data["url"])
-                is_limited, proxy = self.check_limit_speed(set_config)
+                is_limited, proxy = self.check_limit_speed(site_config)
                 if is_limited:
                     print '# 被限制, 放回去, 下次下载'
                     time.sleep(1)  # 休息一秒, 延迟放回去的时间
                     r.lpush('unicrawler:urls', resp_data[1])
                 else:
                     print '# 未被限制,可以下载'
-                    if set_config['browser'] == Site.BROWSER_NONE:
+                    if site_config['browser'] == Site.BROWSER_NONE:
                         browser = RequestsDownloaderBackend(proxy=proxy)
                     else:
                         return
 
-                    # 清理site_config
-                    data.pop('site_config', None)
                     data['body'] = browser.download(data["url"])
-
-                    logger.debug(data)
                     r.lpush('unicrawler:urls-body', json.dumps(data))
+                    logger.debug(data)
             except Exception as e:
                 print e
                 raise

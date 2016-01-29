@@ -60,7 +60,8 @@ class Extractor():
                         'kind': KIND_DETAIL_URL,
                         'rule_id': data['rule_id'],
                         'detail_rules': data['detail_rules'],
-                        'seed_id': data['seed_id']
+                        'seed_id': data['seed_id'],
+                        'site_config': data['site_config']
                     }
                     r.lpush('unicrawler:urls', json.dumps(item_data))
 

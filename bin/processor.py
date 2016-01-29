@@ -48,7 +48,7 @@ class MysqlBackend(object):
         for k, v in self.defaults.iteritems():
             data.setdefault(k, v)
         # 清除数据
-        del data['seed_id']
+        data.pop('seed_id', None)
         data['uniqueid'] = get_uniqueid(data['url'])
         data['update_time'] = str(datetime.now())
         # 更新或插入数据库
