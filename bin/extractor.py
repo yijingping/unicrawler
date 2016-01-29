@@ -51,18 +51,7 @@ class Extractor():
             tree = etree.parse(StringIO(body), htmlparser)
             # 如果当前接卸的页面是列表页
             if data["kind"] == KIND_LIST_URL:
-                # 找下一页
-                next_urls = self.extract(tree, data["next_url_rules"])
-                print 'next_urls: %s' % next_urls
-                for item in next_urls:
-                    item_data = data.copy()
-                    item_data['url'] = item
-                    item_data['fresh_pages'] -= 1
-                    if item_data['fresh_pages'] >= 0:
-                        logger.debug('list:%s' % data['url'])
-                        r.lpush('unicrawler:urls', json.dumps(item_data))
-
-                # 找详情页
+                # 先找详情页
                 detail_urls = self.extract(tree, data['list_rules'])
                 #logger.debug('detail_urls: %s' % detail_urls)
                 for item in detail_urls:
@@ -74,6 +63,17 @@ class Extractor():
                         'seed_id': data['seed_id']
                     }
                     r.lpush('unicrawler:urls', json.dumps(item_data))
+
+                # 后找下一页
+                next_urls = self.extract(tree, data["next_url_rules"])
+                print 'next_urls: %s' % next_urls
+                for item in next_urls:
+                    item_data = data.copy()
+                    item_data['url'] = item
+                    item_data['fresh_pages'] -= 1
+                    if item_data['fresh_pages'] >= 0:
+                        logger.debug('list:%s' % data['url'])
+                        r.lpush('unicrawler:urls', json.dumps(item_data))
             # 如果当前接卸的页面是详情页
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
