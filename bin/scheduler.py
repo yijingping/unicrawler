@@ -33,7 +33,10 @@ class Scheduler():
                         continue
 
                     data = {
-                        'url': rule.url, 'kind': KIND_LIST_URL, 'rule_id': rule.pk,
+                        'url': rule.url,
+                        'kind': KIND_LIST_URL,
+                        'rule_id': rule.pk,
+                        'site_config': rule.site.get_config(),
                         'list_rules': rule.list_rules,
                         'next_url_rules': rule.next_url_rules,
                         'detail_rules': deital_rule.data,
