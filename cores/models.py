@@ -84,7 +84,7 @@ class IndexRule(models.Model):
     seed = models.ForeignKey(Seed)
     name = models.CharField(max_length=100, verbose_name='来源')
     site = models.ForeignKey(Site)
-    url = models.CharField(max_length=100, verbose_name='索引url')
+    url = JSONField(verbose_name='索引url列表', load_kwargs={'object_pairs_hook': collections.OrderedDict})
     list_rules = JSONField(verbose_name='获取列表项的规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
     next_url_rules = JSONField(verbose_name='下一页索引的规则列表', load_kwargs={'object_pairs_hook': collections.OrderedDict}, blank=True, default=[])
     frequency = models.IntegerField(default=60, verbose_name='爬取频率,单位秒')

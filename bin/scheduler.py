@@ -32,8 +32,7 @@ class Scheduler():
                         print e
                         continue
 
-                    data = {
-                        'url': rule.url,
+                    base = {
                         'kind': KIND_LIST_URL,
                         'rule_id': rule.pk,
                         'site_config': rule.site.get_config(),
@@ -43,7 +42,11 @@ class Scheduler():
                         "seed_id": item.pk,
                         "fresh_pages": rule.fresh_pages
                     }
-                    r.lpush('unicrawler:urls', json.dumps(data))
+                    for url in rule.url:
+                        data = base.copy()
+                        data['url'] = url
+                        r.lpush('unicrawler:urls', json.dumps(data))
+
                     # 更新index_rule
                     rule.next_crawl_time = now + timedelta(seconds=rule.frequency)
                     rule.save()
