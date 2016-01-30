@@ -75,7 +75,7 @@ class MysqlBackend(object):
 
     def update(self, params, filters=None):
         set_keys = params.keys()
-        set_values = params.values()
+        values = params.values()
         set_placeholder = ', '.join(['`'+item+'`=%s' for item in set_keys])
         sql = 'UPDATE ' + self._table + ' SET ' + set_placeholder
         if filters:
@@ -83,7 +83,7 @@ class MysqlBackend(object):
             where_values = filters.values()
             where_placeholder = ', '.join(['`'+item+'`=%s' for item in where_keys])
             sql = sql + ' WHERE ' + where_placeholder
-            values = set_values + where_values
+            values += where_values
         return self.db.update(sql, *values)
 
     @staticmethod
