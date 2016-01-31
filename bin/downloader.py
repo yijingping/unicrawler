@@ -47,6 +47,7 @@ class RequestsDownloaderBackend(object):
         header = sample(self.headers, 1)[0]
         proxies = self.format_proxies()
         rsp = requests.get(url, headers=header, proxies=proxies)
+        rsp.close()
         rsp.encoding = rsp.apparent_encoding
         return rsp.text
 
@@ -66,7 +67,6 @@ class MysqlProxyBackend(object):
 
     def __str__(self):
         return ':'.join([str(self.user), str(self.password), str(self.host), str(self.port)])
-
 
 
 class Downloader(object):

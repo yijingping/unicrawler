@@ -41,6 +41,7 @@ class Scheduler(object):
                         'list_rules': rule.list_rules,
                         'next_url_rules': rule.next_url_rules,
                         'detail_rules': deital_rule.data,
+                        'detail_exclude': deital_rule.exclude,
                         "seed_id": item.pk,
                         "fresh_pages": rule.fresh_pages
                     }

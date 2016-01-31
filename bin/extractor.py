@@ -9,18 +9,16 @@ import django
 django.setup()
 
 import json
-import redis
 from lxml import etree
-from cores.models import IndexRule, DetailRule
 from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
 from io import StringIO
 from django.conf import settings
 from cores.util import get_redis
-
 import logging
 logger = logging.getLogger()
 
-class Extractor():
+
+class Extractor(object):
     def extract(self, tree, rules):
         res = []
         for rule in rules:
@@ -61,6 +59,7 @@ class Extractor():
                         'kind': KIND_DETAIL_URL,
                         'rule_id': data['rule_id'],
                         'detail_rules': data['detail_rules'],
+                        'detail_exclude': data['detail_exclude'],
                         'seed_id': data['seed_id'],
                         'site_config': data['site_config']
                     }
@@ -79,11 +78,16 @@ class Extractor():
             # 如果当前解析的页面是详情页
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
-                rules = data['detail_rules']
+                exclude_rules = data['detail_exclude']
+                if self.extract(tree, exclude_rules):
+                    logger.debug('# url in excludes, abort!')
+                    continue
+
                 result = {
                     "url": data['url'],
                     "seed_id": data['seed_id']
                 }
+                rules = data['detail_rules']
                 for item in rules:
                     col = item["key"]
                     print col
@@ -92,6 +96,7 @@ class Extractor():
                     result[col] = col_value
 
                 r.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
+                result['content'] = 'XXXXX'
                 logger.debug('extracted:%s' % result)
 
 

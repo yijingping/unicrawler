@@ -14,7 +14,8 @@ class Seed(models.Model):
     )
     name = models.CharField(max_length=100, verbose_name='模板名称')
     desc = models.TextField(verbose_name='简介')
-    data = JSONField(verbose_name='存储数据配置', load_kwargs={'object_pairs_hook': collections.OrderedDict}, blank=True, default=[])
+    data = JSONField(verbose_name='存储数据配置', load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                     blank=True, default=[])
     weight = models.IntegerField(default=0, verbose_name='权重')
     status = models.IntegerField(default=STATUS_ENABLE, choices=STATUS_CHOICES, verbose_name="是否启用")
 
@@ -103,6 +104,8 @@ class IndexRule(models.Model):
 class DetailRule(models.Model):
     index_rule = models.ForeignKey(IndexRule)
     data = JSONField(verbose_name='详情页规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
+    exclude = JSONField(verbose_name='排除规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                        blank=True, default=[])
 
     def __unicode__(self):
         return '%s, %s' % (self.index_rule.name, self.index_rule.url)
