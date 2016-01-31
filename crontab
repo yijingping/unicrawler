@@ -1,2 +1,2 @@
 # 监控服务队列积压数
-*/1 * * * * cd /var/www/pythonzone/web; python ./manage.py monitor service >> /var/log/pythonzone/monitor_service.log 2>&1
+*/1 * * * * cd /var/www/pythonzone/unicrawler; python ./manage.py monitor service >> /var/log/pythonzone/monitor_service.log 2>&1
