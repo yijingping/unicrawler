@@ -10,11 +10,11 @@ django.setup()
 
 import time
 import json
-import redis
 import requests
 from django.conf import settings
 from cores.models import Site, Proxy
 from random import sample
+from cores.util import get_redis
 
 import logging
 logger = logging.getLogger()
@@ -71,7 +71,7 @@ class MysqlProxyBackend(object):
 
 class Downloader(object):
     def __init__(self):
-        self.redis = redis.StrictRedis(**settings.REDIS_OPTIONS)
+        self.redis = get_redis()
 
     def get_proxy(self, kind):
         if kind == Site.PROXY_MYSQL:
@@ -93,10 +93,10 @@ class Downloader(object):
 
     def run(self):
         r = self.redis
-        r.delete('unicrawler:urls')
+        r.delete(settings.CRAWLER_CONFIG["downloader"])
         while True:
             try:
-                resp_data = r.brpop('unicrawler:urls')
+                resp_data = r.brpop(settings.CRAWLER_CONFIG["downloader"])
             except Exception as e:
                 print e
                 continue
@@ -109,7 +109,7 @@ class Downloader(object):
                 if is_limited:
                     print '# 被限制, 放回去, 下次下载'
                     time.sleep(1)  # 休息一秒, 延迟放回去的时间
-                    r.lpush('unicrawler:urls', resp_data[1])
+                    r.lpush(settings.CRAWLER_CONFIG["downloader"], resp_data[1])
                 else:
                     print '# 未被限制,可以下载'
                     if site_config['browser'] == Site.BROWSER_NONE:
@@ -118,7 +118,7 @@ class Downloader(object):
                         return
 
                     data['body'] = browser.download(data["url"])
-                    r.lpush('unicrawler:urls-body', json.dumps(data))
+                    r.lpush(settings.CRAWLER_CONFIG["extractor"], json.dumps(data))
                     logger.debug(data)
             except Exception as e:
                 print e

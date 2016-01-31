@@ -13,17 +13,12 @@ import _mysql
 import torndb
 from datetime import datetime
 import json
-import redis
-from hashlib import md5
 from django.utils.encoding import smart_str, smart_unicode
 from django.conf import settings
 from cores.models import Seed
+from cores.util import get_redis, get_uniqueid
 import logging
 logger = logging.getLogger()
-
-
-def get_uniqueid(url):
-    return md5(url).hexdigest()
 
 
 class MysqlBackend(object):
@@ -139,11 +134,11 @@ class Processor():
             backend.process(data)
 
     def run(self):
-        r = redis.StrictRedis(**settings.REDIS_OPTIONS)
+        r = get_redis()
         #r.delete('unicrawler:data')
         while True:
             try:
-                rsp = r.brpop('unicrawler:data')
+                rsp = r.brpop(settings.CRAWLER_CONFIG["processor"])
             except Exception as e:
                 print e
                 continue

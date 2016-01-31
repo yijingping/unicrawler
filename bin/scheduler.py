@@ -17,10 +17,12 @@ import logging
 logger = logging.getLogger()
 from datetime import datetime, timedelta
 import time
+from cores.util import get_redis
 
-class Scheduler():
+
+class Scheduler(object):
     def run(self):
-        r = redis.StrictRedis(**settings.REDIS_OPTIONS)
+        r = get_redis()
         while True:
             now = datetime.now()
             for item in Seed.objects.filter(status=Seed.STATUS_ENABLE).order_by('-weight'):
@@ -45,7 +47,7 @@ class Scheduler():
                     for url in rule.url:
                         data = base.copy()
                         data['url'] = url
-                        r.lpush('unicrawler:urls', json.dumps(data))
+                        r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(data))
 
                     # 更新index_rule
                     rule.next_crawl_time = now + timedelta(seconds=rule.frequency)

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
 
     'unicrawler',
     'cores',
+    'monitors'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -117,6 +118,14 @@ REDIS_OPTIONS = {
     'password': '',
     'db': 3
 }
+
+CRAWLER_CONFIG = {
+    #'scheduler': 'unicrawler:scheduler',
+    'downloader': 'unicrawler:downloader',
+    'extractor': 'unicrawler:extractor',
+    'processor': 'unicrawler:processor'
+}
+
 
 LOGGING = {
     'version': 1,

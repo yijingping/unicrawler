@@ -15,6 +15,7 @@ from cores.models import IndexRule, DetailRule
 from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
 from io import StringIO
 from django.conf import settings
+from cores.util import get_redis
 
 import logging
 logger = logging.getLogger()
@@ -36,11 +37,11 @@ class Extractor():
         return res
 
     def run(self):
-        r = redis.StrictRedis(**settings.REDIS_OPTIONS)
-        r.delete('unicrawler:urls-body')
+        r = get_redis()
+        r.delete(settings.CRAWLER_CONFIG["extractor"])
         while True:
             try:
-                data = r.brpop('unicrawler:urls-body')
+                data = r.brpop(settings.CRAWLER_CONFIG["extractor"])
             except Exception as e:
                 print e
                 continue
@@ -63,7 +64,7 @@ class Extractor():
                         'seed_id': data['seed_id'],
                         'site_config': data['site_config']
                     }
-                    r.lpush('unicrawler:urls', json.dumps(item_data))
+                    r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
 
                 # 后找下一页
                 next_urls = self.extract(tree, data["next_url_rules"])
@@ -74,8 +75,8 @@ class Extractor():
                     item_data['fresh_pages'] -= 1
                     if item_data['fresh_pages'] >= 0:
                         logger.debug('list:%s' % data['url'])
-                        r.lpush('unicrawler:urls', json.dumps(item_data))
-            # 如果当前接卸的页面是详情页
+                        r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
+            # 如果当前解析的页面是详情页
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
                 rules = data['detail_rules']
@@ -90,7 +91,7 @@ class Extractor():
                     col_value = self.extract(tree, col_rules)
                     result[col] = col_value
 
-                r.lpush('unicrawler:data', json.dumps(result))
+                r.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
                 logger.debug('extracted:%s' % result)
 
 
