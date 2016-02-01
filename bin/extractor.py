@@ -57,11 +57,14 @@ class Extractor(object):
                     item_data = {
                         "url": item,
                         'kind': KIND_DETAIL_URL,
-                        'rule_id': data['rule_id'],
-                        'detail_rules': data['detail_rules'],
-                        'detail_exclude': data['detail_exclude'],
                         'seed_id': data['seed_id'],
-                        'site_config': data['site_config']
+                        'rule_id': data['rule_id'],
+                        #'fresh_pages': '',
+                        #'list_rules': '',
+                        #'next_url_rules': '',
+                        'site_config': data['site_config'],
+                        'detail_rules': data['detail_rules'],
+                        'detail_exclude': data['detail_exclude']
                     }
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
 
@@ -69,20 +72,30 @@ class Extractor(object):
                 next_urls = self.extract(tree, data["next_url_rules"])
                 print 'next_urls: %s' % next_urls
                 for item in next_urls:
-                    item_data = data.copy()
-                    item_data['url'] = item
-                    item_data['fresh_pages'] -= 1
+                    item_data = {
+                        "url": item,
+                        'kind': KIND_LIST_URL,
+                        'seed_id': data['seed_id'],
+                        'rule_id': data['rule_id'],
+                        'fresh_pages': data['fresh_pages'] - 1,
+                        'site_config': data['site_config'],
+                        'list_rules': data['list_rules'],
+                        'next_url_rules': data['next_url_rules'],
+                        'detail_rules': data['detail_rules'],
+                        'detail_exclude': data['detail_exclude']
+                    }
                     if item_data['fresh_pages'] >= 0:
                         logger.debug('list:%s' % data['url'])
                         r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
             # 如果当前解析的页面是详情页
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
+                # 检查是否在exclude规则内. 如果在,放弃存储
                 exclude_rules = data['detail_exclude']
                 if self.extract(tree, exclude_rules):
                     logger.debug('# url in excludes, abort!')
                     continue
-
+                # 不在exclude规则内,可以存储
                 result = {
                     "url": data['url'],
                     "seed_id": data['seed_id']
@@ -96,7 +109,6 @@ class Extractor(object):
                     result[col] = col_value
 
                 r.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
-                result['content'] = 'XXXXX'
                 logger.debug('extracted:%s' % result)
 
 

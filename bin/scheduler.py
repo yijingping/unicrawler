@@ -9,7 +9,6 @@ import django
 django.setup()
 
 import json
-import redis
 from cores.models import Seed, IndexRule, DetailRule
 from cores.constants import KIND_LIST_URL
 from django.conf import settings
@@ -35,15 +34,16 @@ class Scheduler(object):
                         continue
 
                     base = {
+                        'url': '',
                         'kind': KIND_LIST_URL,
+                        "seed_id": item.pk,
                         'rule_id': rule.pk,
+                        "fresh_pages": rule.fresh_pages,
                         'site_config': rule.site.get_config(),
                         'list_rules': rule.list_rules,
                         'next_url_rules': rule.next_url_rules,
                         'detail_rules': deital_rule.data,
-                        'detail_exclude': deital_rule.exclude,
-                        "seed_id": item.pk,
-                        "fresh_pages": rule.fresh_pages
+                        'detail_exclude': deital_rule.exclude
                     }
                     for url in rule.url:
                         data = base.copy()

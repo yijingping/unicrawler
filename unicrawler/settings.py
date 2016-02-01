@@ -40,6 +40,7 @@ INSTALLED_APPS = (
 
     'unicrawler',
     'cores',
+    'configs',
     'monitors'
 )
 
