@@ -30,7 +30,7 @@ class Command(BaseCommand):
                     item.save()
                 else:
                     item.status = Proxy.STATUS_SUCCESS
-                    item.speed = time_diff
+                    item.speed = time_diff * 1000
                     item.retry = 0
                     item.save()
                     print 'success:', item.host, item.port
