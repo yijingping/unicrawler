@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 __author__ = 'yijingping'
+import time
 from django.db import models
+
+
+def get_default_uniqueid():
+    return str(long(time.time() * 1000000))
 
 
 class Site(models.Model):
@@ -68,7 +73,8 @@ class Proxy(models.Model):
         (STATUS_SUCCESS,'检测成功'),
         (STATUS_FAIL,'检测失败'),
     )
-
+    uniqueid = models.CharField(unique=True, max_length=100, default=get_default_uniqueid, verbose_name='代理参数的md5值')
+    url = models.CharField(max_length=500, default='', verbose_name='url')
     kind = models.IntegerField(default=TYPE_ANONYMOUS, choices=TYPE_CHOICES, verbose_name="代理类型")
     user = models.CharField(default='', blank=True, max_length=100)
     password = models.CharField(default='', blank=True, max_length=100)
@@ -78,6 +84,8 @@ class Proxy(models.Model):
     speed = models.IntegerField(default=0, verbose_name="连接速度(ms)")
     status = models.IntegerField(default=STATUS_NEW, choices=STATUS_CHOICES, verbose_name="状态")
     retry = models.IntegerField(default=0, verbose_name="尝试次数")
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    update_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     class Meta:
         verbose_name_plural = "2 访问代理"

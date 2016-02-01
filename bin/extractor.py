@@ -19,6 +19,9 @@ logger = logging.getLogger()
 
 
 class Extractor(object):
+    def __init__(self):
+        self.redis = get_redis()
+
     def extract(self, tree, rules):
         res = []
         for rule in rules:
@@ -33,6 +36,30 @@ class Extractor(object):
                     logger.exception(e)
 
         return res
+
+    def get_detail(self, tree, data):
+        # 检查是否在exclude规则内. 如果在,放弃存储
+        exclude_rules = data['detail_exclude']
+        if self.extract(tree, exclude_rules):
+            logger.debug('# url in excludes, abort!')
+            return
+
+        # 不在exclude规则内,可以存储
+        result = {
+            "url": data['url'],
+            "seed_id": data['seed_id'],
+            'detail_multi': data['detail_multi']
+        }
+        rules = data['detail_rules']
+        for item in rules:
+            col = item["key"]
+            print col
+            col_rules = item["rules"]
+            col_value = self.extract(tree, col_rules)
+            result[col] = col_value
+
+        self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
+        logger.debug('extracted:%s' % result)
 
     def run(self):
         r = get_redis()
@@ -64,7 +91,8 @@ class Extractor(object):
                         #'next_url_rules': '',
                         'site_config': data['site_config'],
                         'detail_rules': data['detail_rules'],
-                        'detail_exclude': data['detail_exclude']
+                        'detail_exclude': data['detail_exclude'],
+                        'detail_multi': data['detail_multi']
                     }
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
 
@@ -82,34 +110,26 @@ class Extractor(object):
                         'list_rules': data['list_rules'],
                         'next_url_rules': data['next_url_rules'],
                         'detail_rules': data['detail_rules'],
-                        'detail_exclude': data['detail_exclude']
+                        'detail_exclude': data['detail_exclude'],
+                        'detail_multi': data['detail_multi']
                     }
-                    if item_data['fresh_pages'] >= 0:
+                    if item_data['fresh_pages'] > 0:
                         logger.debug('list:%s' % data['url'])
                         r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
             # 如果当前解析的页面是详情页
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
-                # 检查是否在exclude规则内. 如果在,放弃存储
-                exclude_rules = data['detail_exclude']
-                if self.extract(tree, exclude_rules):
-                    logger.debug('# url in excludes, abort!')
-                    continue
-                # 不在exclude规则内,可以存储
-                result = {
-                    "url": data['url'],
-                    "seed_id": data['seed_id']
-                }
-                rules = data['detail_rules']
-                for item in rules:
-                    col = item["key"]
-                    print col
-                    col_rules = item["rules"]
-                    col_value = self.extract(tree, col_rules)
-                    result[col] = col_value
-
-                r.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
-                logger.debug('extracted:%s' % result)
+                # 检查详情页是否有多项详情
+                multi_rules = data['detail_multi']
+                if multi_rules:
+                    multi_parts = self.extract(tree, multi_rules)
+                    for part in multi_parts:
+                        print part
+                        tree = etree.parse(StringIO(part), htmlparser)
+                        self.get_detail(tree, data)
+                else:
+                    # 如果没有多项详情,则只是单项
+                    self.get_detail(tree, data)
 
 
 if __name__ == '__main__':

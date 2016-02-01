@@ -58,6 +58,8 @@ class DetailRule(models.Model):
     data = JSONField(verbose_name='详情页规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
     exclude = JSONField(verbose_name='排除规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
                         blank=True, default=[])
+    multi = JSONField(verbose_name='多详情规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                        blank=True)
 
     def __unicode__(self):
         return '%s, %s' % (self.index_rule.name, self.index_rule.url)

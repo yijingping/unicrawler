@@ -26,7 +26,8 @@ class MysqlBackend(object):
     def _table(self):
         return self.db_table
 
-    def __init__(self, db_config, db_table, defaults):
+    def __init__(self, config):
+        db_config = config['database']
         self.db = torndb.Connection(
             host=db_config.get("host"),
             database=db_config.get("name"),
@@ -34,18 +35,23 @@ class MysqlBackend(object):
             password=db_config.get("password"),
             charset=db_config.get("charset")
         )
-        self.db_table = db_table
-        self.defaults = defaults
+        self.db_table = config['table']
+        self.defaults = config['defaults']
+        self.unique_key = config["unique_key"]
 
     def process(self, params, filters=None):
         # 加上默认值
         data = params.copy()
         for k, v in self.defaults.iteritems():
             data.setdefault(k, v)
+
+        # 设置唯一键
+        unique_value = ':'.join(['%s' % data[k] for k in self.unique_key])
+        data['uniqueid'] = get_uniqueid(unique_value)
+        data['update_time'] = str(datetime.now())
         # 清除数据
         data.pop('seed_id', None)
-        data['uniqueid'] = get_uniqueid(data['url'])
-        data['update_time'] = str(datetime.now())
+        data.pop('detail_multi', None)
         # 更新或插入数据库
         try:
             # try update
@@ -121,7 +127,7 @@ class Processor():
             else:
                 for config in seed.data:
                     if config["kind"] == "mysql":
-                        backend = MysqlBackend(config["database"], config["table"], config["defaults"])
+                        backend = MysqlBackend(config)
                         my_config = self.pools.get(seed_id, [])
                         my_config.append(backend)
                         self.pools[seed_id] = my_config
