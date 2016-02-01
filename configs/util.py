@@ -14,6 +14,7 @@ def get_real_pip():
     req.add_header('User-agent', user_agent)
     conn = urllib2.urlopen(req)
     page = conn.read()
+    conn.close()
     return page
 
 # Set global variable containing "real" public IP address
@@ -34,6 +35,7 @@ def check_proxy(host, port):
         conn = urllib2.urlopen(req, timeout=socket_timeout)
         time_end = time.time()
         detected_pip = conn.read()
+        conn.close()
 
         # Calculate request time
         time_diff = time_end - time_start
