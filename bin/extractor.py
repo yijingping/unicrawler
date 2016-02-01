@@ -124,7 +124,6 @@ class Extractor(object):
                 if multi_rules:
                     multi_parts = self.extract(tree, multi_rules)
                     for part in multi_parts:
-                        print part
                         tree = etree.parse(StringIO(part), htmlparser)
                         self.get_detail(tree, data)
                 else:
