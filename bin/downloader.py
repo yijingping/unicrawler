@@ -12,7 +12,8 @@ import time
 import json
 import requests
 from django.conf import settings
-from cores.models import Site, Proxy
+from cores.models import Site
+from configs.models import Proxy
 from random import sample
 from cores.util import get_redis
 
