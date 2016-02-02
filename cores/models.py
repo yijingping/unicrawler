@@ -60,6 +60,7 @@ class DetailRule(models.Model):
                         blank=True, default=[])
     multi = JSONField(verbose_name='多详情规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
                         blank=True)
+    fresh_time = models.IntegerField(default=2592000, verbose_name='新鲜度维持时间(秒),默认一个月')
 
     def __unicode__(self):
         return '%s, %s' % (self.index_rule.name, self.index_rule.url)

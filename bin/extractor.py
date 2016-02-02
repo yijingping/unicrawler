@@ -93,7 +93,8 @@ class Extractor(object):
                         'site_config': data['site_config'],
                         'detail_rules': data['detail_rules'],
                         'detail_exclude': data['detail_exclude'],
-                        'detail_multi': data['detail_multi']
+                        'detail_multi': data['detail_multi'],
+                        'detail_fresh_time': data['detail_fresh_time']
                     }
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
 
@@ -112,7 +113,8 @@ class Extractor(object):
                         'next_url_rules': data['next_url_rules'],
                         'detail_rules': data['detail_rules'],
                         'detail_exclude': data['detail_exclude'],
-                        'detail_multi': data['detail_multi']
+                        'detail_multi': data['detail_multi'],
+                        'detail_fresh_time': data['detail_fresh_time']
                     }
                     if item_data['fresh_pages'] > 0:
                         logger.debug('list:%s' % data['url'])

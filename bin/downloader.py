@@ -15,7 +15,8 @@ from django.conf import settings
 from cores.models import Site
 from configs.models import Proxy
 from random import sample
-from cores.util import get_redis
+from cores.util import get_redis, get_uniqueid
+from cores.constants import KIND_DETAIL_URL
 
 import logging
 logger = logging.getLogger()
@@ -92,6 +93,17 @@ class Downloader(object):
                 self.redis.psetex(key, config["limit_speed"], config["limit_speed"])
                 return False, proxy
 
+    def check_detail_fresh_time(self, url, fresh_time):
+        if fresh_time <= 0:
+            return False
+        else:
+            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(url)
+            if self.redis.exists(key):
+                return True
+            else:
+                self.redis.setex(key, fresh_time, fresh_time)
+                return False
+
     def run(self):
         r = self.redis
         r.delete(settings.CRAWLER_CONFIG["downloader"])
@@ -111,6 +123,9 @@ class Downloader(object):
                     print '# 被限制, 放回去, 下次下载'
                     time.sleep(1)  # 休息一秒, 延迟放回去的时间
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], resp_data[1])
+                if (data["kind"] == KIND_DETAIL_URL
+                    and self.check_detail_fresh_time(data["url"], data["detail_fresh_time"])):
+                    print '# 该详情页已下载过, 不下载了'
                 else:
                     print '# 未被限制,可以下载'
                     if site_config['browser'] == Site.BROWSER_NONE:

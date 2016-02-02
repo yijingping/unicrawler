@@ -44,7 +44,8 @@ class Scheduler(object):
                         'next_url_rules': rule.next_url_rules,
                         'detail_rules': deital_rule.data,
                         'detail_exclude': deital_rule.exclude,
-                        'detail_multi': deital_rule.multi
+                        'detail_multi': deital_rule.multi,
+                        'detail_fresh_time': deital_rule.fresh_time
                     }
                     for url in rule.url:
                         data = base.copy()
