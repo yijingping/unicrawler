@@ -123,7 +123,7 @@ class Downloader(object):
                     print '# 被限制, 放回去, 下次下载'
                     time.sleep(1)  # 休息一秒, 延迟放回去的时间
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], resp_data[1])
-                if (data["kind"] == KIND_DETAIL_URL
+                elif (data["kind"] == KIND_DETAIL_URL
                     and self.check_detail_fresh_time(data["url"], data["detail_fresh_time"])):
                     print '# 该详情页已下载过, 不下载了'
                 else:
