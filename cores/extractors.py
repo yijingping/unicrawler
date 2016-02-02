@@ -28,7 +28,7 @@ def download_to_oss(image_url):
     r.close()
     key = OSS2_CONF["IMAGES_PATH"] + md5(r.content).hexdigest()
     bucket = get_bucket()
-    bucket.put_object(key, r)
+    bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type')})
     return 'http://%s/%s' % (OSS2_CONF["IMAGES_DOMAIN"], key)
 
 

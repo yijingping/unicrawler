@@ -165,7 +165,7 @@ OSS2_CONFIG = {
     "BUCKET_DOMAIN": "oss-cn-beijing.aliyuncs.com",
     "BUCKET_NAME": "pythonzone",
     "IMAGES_PATH": "images/",
-    "IMAGES_DOMAIN": "pythonzone.img-cn-beijing.aliyuncs.com"
+    "IMAGES_DOMAIN": "pystats.bowenpay.com"
 }
 
 ## Import local settings
