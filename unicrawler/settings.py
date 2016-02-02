@@ -157,6 +157,16 @@ LOGGING = {
     },
 }
 
+# aliyun oss2
+OSS2_CONFIG = {
+    "ACCESS_KEY_ID": "",
+    "ACCESS_KEY_SECRET": "",
+    "ENDPOINT": "",
+    "BUCKET_DOMAIN": "oss-cn-beijing.aliyuncs.com",
+    "BUCKET_NAME": "pythonzone",
+    "IMAGES_PATH": "images/",
+    "IMAGES_DOMAIN": "pythonzone.img-cn-beijing.aliyuncs.com"
+}
 
 ## Import local settings
 try:

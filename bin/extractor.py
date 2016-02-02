@@ -14,6 +14,7 @@ from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
 from io import StringIO
 from django.conf import settings
 from cores.util import get_redis
+from cores.extractors import XPathExtractor, PythonExtractor, ImageExtractor
 import logging
 logger = logging.getLogger()
 
@@ -25,15 +26,15 @@ class Extractor(object):
     def extract(self, tree, rules):
         res = []
         for rule in rules:
+            extractor = None
             if rule["kind"] == "xpath":
-                res = tree.xpath(rule["data"])
+                extractor = XPathExtractor(tree, rule["data"])
             elif rule["kind"] == "python":
-                g, l = {}, {"in_val": res}
-                try:
-                    exec(rule["data"], g, l)
-                    res = l["out_val"]
-                except Exception as e:
-                    logger.exception(e)
+                extractor = PythonExtractor(rule["data"], res)
+            elif rule["kind"] == "image":
+                extractor = ImageExtractor(res)
+
+            res = extractor.extract()
 
         return res
 
@@ -63,7 +64,7 @@ class Extractor(object):
 
     def run(self):
         r = get_redis()
-        r.delete(settings.CRAWLER_CONFIG["extractor"])
+        #r.delete(settings.CRAWLER_CONFIG["extractor"])
         while True:
             try:
                 data = r.brpop(settings.CRAWLER_CONFIG["extractor"])
@@ -132,5 +133,5 @@ class Extractor(object):
 
 
 if __name__ == '__main__':
-    extractor = Extractor()
-    extractor.run()
+    my_extractor = Extractor()
+    my_extractor.run()
