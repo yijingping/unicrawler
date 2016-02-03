@@ -69,11 +69,8 @@ class Extractor(object):
             col_value = self.extract(content, col_rules, {'data': data})
             result[col] = col_value
 
-
         # 检查多项详情新鲜度
         if data['detail_multi']:
-            unique_value = '%s' % self.extract(content, data['detail_multi_unique'], {'data': result})
-            result['url'] = '#'.join([result['url'], unique_value])
             if self.check_detail_fresh_time(result['url'], data["detail_fresh_time"]):
                 # 未过期,不更新
                 logger.info('检查多项详情未过期,不更新')
@@ -88,8 +85,8 @@ class Extractor(object):
 
     def run(self):
         r = get_redis()
-        #if settings.DEBUG:
-        #    r.delete(settings.CRAWLER_CONFIG["extractor"])
+        if settings.DEBUG:
+            r.delete(settings.CRAWLER_CONFIG["extractor"])
         while True:
             try:
                 data = r.brpop(settings.CRAWLER_CONFIG["extractor"])
