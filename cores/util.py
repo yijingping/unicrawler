@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'yijingping'
 import redis
+import json
 from django.conf import settings
 from hashlib import md5
 REDIS_POOL = None
@@ -19,4 +20,13 @@ def get_redis():
 
 
 def get_uniqueid(url):
-    return md5(url).hexdigest()
+    link = get_link_from_url(url)
+    return md5(link).hexdigest()
+
+
+def get_link_from_url(url):
+    if isinstance(url, basestring):
+        return url
+    elif isinstance(url, dict):
+        return json.dumps(url)
+

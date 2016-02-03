@@ -45,6 +45,7 @@ class Scheduler(object):
                         'detail_rules': deital_rule.data,
                         'detail_exclude': deital_rule.exclude,
                         'detail_multi': deital_rule.multi,
+                        'detail_multi_unique': deital_rule.multi_unique,
                         'detail_fresh_time': deital_rule.fresh_time,
                         'unique_key': item.data[0]["unique_key"]
                     }

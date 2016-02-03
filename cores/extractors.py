@@ -4,7 +4,10 @@ from abc import ABCMeta
 from abc import abstractmethod
 import requests
 import oss2
+from copy import copy
 from hashlib import md5
+from lxml import etree
+from io import StringIO
 from django.conf import settings
 import logging
 logger = logging.getLogger()
@@ -66,8 +69,9 @@ class ImageExtractor(BaseExtractor):
 
 
 class XPathExtractor(BaseExtractor):
-    def __init__(self, tree, rule):
-        self.tree = tree
+    def __init__(self, content, rule):
+        htmlparser = etree.HTMLParser()
+        self.tree = etree.parse(StringIO(content), htmlparser)
         self.rule = rule
 
     def extract(self):
@@ -75,13 +79,15 @@ class XPathExtractor(BaseExtractor):
 
 
 class PythonExtractor(BaseExtractor):
-    def __init__(self, code, in_val):
+    def __init__(self, code, in_val, context):
         self.code = code
         self.in_val = in_val
+        self.context = copy(context)
+        self.context.update({'in_val': in_val})
 
     def extract(self):
         res = self.in_val
-        g, l = {}, {"in_val": self.in_val}
+        g, l = {}, self.context
         try:
             exec(self.code, g, l)
             res = l["out_val"]

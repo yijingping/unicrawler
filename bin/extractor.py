@@ -9,11 +9,9 @@ import django
 django.setup()
 
 import json
-from lxml import etree
 from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
-from io import StringIO
 from django.conf import settings
-from cores.util import get_redis, get_uniqueid
+from cores.util import get_redis, get_uniqueid, get_link_from_url
 from cores.extractors import XPathExtractor, PythonExtractor, ImageExtractor
 import logging
 logger = logging.getLogger()
@@ -23,14 +21,15 @@ class Extractor(object):
     def __init__(self):
         self.redis = get_redis()
 
-    def extract(self, tree, rules):
-        res = []
+    def extract(self, content, rules, context):
+        print content, rules, context
+        res = content
         for rule in rules:
             extractor = None
             if rule["kind"] == "xpath":
-                extractor = XPathExtractor(tree, rule["data"])
+                extractor = XPathExtractor(res, rule["data"])
             elif rule["kind"] == "python":
-                extractor = PythonExtractor(rule["data"], res)
+                extractor = PythonExtractor(rule["data"], res, context=context)
             elif rule["kind"] == "image":
                 extractor = ImageExtractor(res)
 
@@ -38,29 +37,28 @@ class Extractor(object):
 
         return res
 
-    def check_detail_fresh_time(self, data, unique_key, fresh_time):
+    def check_detail_fresh_time(self, unique_url, fresh_time):
         if fresh_time <= 0:
             return False
         else:
-            print data, unique_key, fresh_time
-            unique_value = ''.join([str(data.get(item)) for item in unique_key])
-            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(unique_value)
+            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(unique_url)
             if self.redis.exists(key):
                 return True
             else:
                 self.redis.setex(key, fresh_time, fresh_time)
                 return False
 
-    def get_detail(self, tree, data):
+    def get_detail(self, content, data):
         # 检查是否在exclude规则内. 如果在,放弃存储
         exclude_rules = data['detail_exclude']
-        if self.extract(tree, exclude_rules):
+        excluded = self.extract(content, exclude_rules, {'data': data})
+        if excluded and excluded != content:
             logger.debug('# url in excludes, abort!')
             return
 
         # 不在exclude规则内,可以存储
         result = {
-            "url": data['url'],
+            "url": get_link_from_url(data['url']),
             "seed_id": data['seed_id'],
             'detail_multi': data['detail_multi']
         }
@@ -69,14 +67,22 @@ class Extractor(object):
             col = item["key"]
             print col
             col_rules = item["rules"]
-            col_value = self.extract(tree, col_rules)
+            col_value = self.extract(content, col_rules, {'data': data})
             result[col] = col_value
 
 
         # 检查多项详情新鲜度
-        if data['detail_multi'] and self.check_detail_fresh_time(result, data['unique_key'], data["detail_fresh_time"]):
-            # 未过期,不更新
-            logger.info('检查多项详情未过期,不更新')
+        if data['detail_multi']:
+            unique_value = '%s' % self.extract(content, data['detail_multi_unique'], {'data': result})
+            print unique_value
+            result['url'] = '#'.join([result['url'], unique_value])
+            if self.check_detail_fresh_time(result['url'], data["detail_fresh_time"]):
+                # 未过期,不更新
+                logger.info('检查多项详情未过期,不更新')
+            else:
+                # 已过期,更新
+                self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
+                logger.debug('extracted:%s' % result)
         else:
             # 已过期,更新
             self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
@@ -95,8 +101,6 @@ class Extractor(object):
             #print data
             data = json.loads(data[1])
             body = data['body']
-            htmlparser = etree.HTMLParser()
-            tree = etree.parse(StringIO(body), htmlparser)
             # 1 如果当前接卸的页面是列表页
             if data["kind"] == KIND_LIST_URL:
                 # 1.1先找详情页
@@ -104,13 +108,12 @@ class Extractor(object):
                 multi_rules = data['detail_multi']
                 if multi_rules:
                     # 1.1.1 详情都包含在列表页中
-                    multi_parts = self.extract(tree, multi_rules)
+                    multi_parts = self.extract(body, multi_rules, {'data': data})
                     for part in multi_parts:
-                        tree = etree.parse(StringIO(part), htmlparser)
-                        self.get_detail(tree, data)
+                        self.get_detail(part, data)
                 else:
                     # 1.1.2 详情不在列表中,通过列表url去访问详情
-                    detail_urls = self.extract(tree, data['list_rules'])
+                    detail_urls = self.extract(body, data['list_rules'], {'data': data})
                     #logger.debug('detail_urls: %s' % detail_urls)
                     for item in detail_urls:
                         item_data = {
@@ -125,13 +128,14 @@ class Extractor(object):
                             'detail_rules': data['detail_rules'],
                             'detail_exclude': data['detail_exclude'],
                             'detail_multi': data['detail_multi'],
+                            'detail_multi_unique': data['detail_multi_unique'],
                             'detail_fresh_time': data['detail_fresh_time'],
                             'unique_key': data['unique_key']
                         }
                         r.lpush(settings.CRAWLER_CONFIG["downloader"], json.dumps(item_data))
 
                 # 1.2后找下一页
-                next_urls = self.extract(tree, data["next_url_rules"])
+                next_urls = self.extract(body, data["next_url_rules"], {'data': data})
                 print 'next_urls: %s' % next_urls
                 for item in next_urls:
                     item_data = {
@@ -146,6 +150,7 @@ class Extractor(object):
                         'detail_rules': data['detail_rules'],
                         'detail_exclude': data['detail_exclude'],
                         'detail_multi': data['detail_multi'],
+                        'detail_multi_unique': data['detail_multi_unique'],
                         'detail_fresh_time': data['detail_fresh_time'],
                         'unique_key': data['unique_key']
                     }
@@ -156,7 +161,7 @@ class Extractor(object):
             elif data["kind"] == KIND_DETAIL_URL:
                 logger.debug('detail:%s' % data['url'])
                 # 如果没有多项详情,则只是单项
-                self.get_detail(tree, data)
+                self.get_detail(body, data)
 
 
 if __name__ == '__main__':
