@@ -22,7 +22,6 @@ class Extractor(object):
         self.redis = get_redis()
 
     def extract(self, content, rules, context):
-        print content, rules, context
         res = content
         for rule in rules:
             extractor = None
@@ -74,7 +73,6 @@ class Extractor(object):
         # 检查多项详情新鲜度
         if data['detail_multi']:
             unique_value = '%s' % self.extract(content, data['detail_multi_unique'], {'data': result})
-            print unique_value
             result['url'] = '#'.join([result['url'], unique_value])
             if self.check_detail_fresh_time(result['url'], data["detail_fresh_time"]):
                 # 未过期,不更新
