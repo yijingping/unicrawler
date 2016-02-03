@@ -141,7 +141,8 @@ class Processor():
 
     def run(self):
         r = get_redis()
-        #r.delete('unicrawler:data')
+        if settings.DEBUG:
+            r.delete(settings.CRAWLER_CONFIG["processor"])
         while True:
             try:
                 rsp = r.brpop(settings.CRAWLER_CONFIG["processor"])

@@ -93,11 +93,12 @@ class Downloader(object):
                 self.redis.psetex(key, config["limit_speed"], config["limit_speed"])
                 return False, proxy
 
-    def check_detail_fresh_time(self, url, fresh_time):
+    def check_detail_fresh_time(self, data, unique_key, fresh_time):
         if fresh_time <= 0:
             return False
         else:
-            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(url)
+            unique_value = ''.join([ data.get(item) for item in unique_key])
+            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(unique_value)
             if self.redis.exists(key):
                 return True
             else:
@@ -106,7 +107,8 @@ class Downloader(object):
 
     def run(self):
         r = self.redis
-        r.delete(settings.CRAWLER_CONFIG["downloader"])
+        if settings.DEBUG:
+            r.delete(settings.CRAWLER_CONFIG["downloader"])
         while True:
             try:
                 resp_data = r.brpop(settings.CRAWLER_CONFIG["downloader"])
@@ -124,7 +126,7 @@ class Downloader(object):
                     time.sleep(1)  # 休息一秒, 延迟放回去的时间
                     r.lpush(settings.CRAWLER_CONFIG["downloader"], resp_data[1])
                 elif (data["kind"] == KIND_DETAIL_URL
-                    and self.check_detail_fresh_time(data["url"], data["detail_fresh_time"])):
+                    and self.check_detail_fresh_time(data, data['unique_key'], data["detail_fresh_time"])):
                     print '# 该详情页已下载过, 不下载了'
                 else:
                     print '# 未被限制,可以下载'
