@@ -57,7 +57,7 @@ class Extractor(object):
 
         # 不在exclude规则内,可以存储
         result = {
-            "url": get_link_from_url(data['url']),
+            "url": data['url'],
             "seed_id": data['seed_id'],
             'detail_multi': data['detail_multi']
         }
