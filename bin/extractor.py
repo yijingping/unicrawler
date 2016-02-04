@@ -87,7 +87,7 @@ class Extractor(object):
 
     def run(self):
         r = get_redis()
-        if settings.DEBUG:
+        if settings.CRAWLER_DEBUG:
             r.delete(settings.CRAWLER_CONFIG["extractor"])
         while True:
             try:

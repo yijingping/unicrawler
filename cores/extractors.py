@@ -36,7 +36,7 @@ def download_to_oss(url, path):
         bucket.head_object(key)
     except NotFound as e:
         logging.exception(e)
-        bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type')})
+        bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type', '')})
 
     return 'http://%s/%s' % (OSS2_CONF["CDN_DOMAIN"], key)
 
@@ -122,5 +122,3 @@ class PythonExtractor(BaseExtractor):
             logger.exception(e)
         finally:
             return res
-
-

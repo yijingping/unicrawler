@@ -118,7 +118,7 @@ class Downloader(object):
 
     def run(self):
         r = self.redis
-        if settings.DEBUG:
+        if settings.CRAWLER_DEBUG:
             r.delete(settings.CRAWLER_CONFIG["downloader"])
         while True:
             try:

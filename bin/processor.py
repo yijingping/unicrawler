@@ -141,7 +141,7 @@ class Processor():
 
     def run(self):
         r = get_redis()
-        if settings.DEBUG:
+        if settings.CRAWLER_DEBUG:
             r.delete(settings.CRAWLER_CONFIG["processor"])
         while True:
             try:

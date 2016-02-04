@@ -127,6 +127,7 @@ CRAWLER_CONFIG = {
     'processor': 'unicrawler:processor'
 }
 
+CRAWLER_DEBUG = False
 
 LOGGING = {
     'version': 1,

@@ -38,8 +38,10 @@ class IndexRule(models.Model):
     name = models.CharField(max_length=100, verbose_name='来源')
     site = models.ForeignKey(Site)
     url = JSONField(verbose_name='索引url列表', load_kwargs={'object_pairs_hook': collections.OrderedDict})
-    list_rules = JSONField(verbose_name='获取列表项的规则', load_kwargs={'object_pairs_hook': collections.OrderedDict})
-    next_url_rules = JSONField(verbose_name='下一页索引的规则列表', load_kwargs={'object_pairs_hook': collections.OrderedDict}, blank=True, default=[])
+    list_rules = JSONField(verbose_name='获取列表项的规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                           blank=True, default=[])
+    next_url_rules = JSONField(verbose_name='下一页索引的规则列表',
+                               load_kwargs={'object_pairs_hook': collections.OrderedDict}, blank=True, default=[])
     frequency = models.IntegerField(default=60, verbose_name='爬取频率,单位秒')
     update_time = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     next_crawl_time = models.DateTimeField(verbose_name='下次爬取时间')
@@ -59,9 +61,9 @@ class DetailRule(models.Model):
     exclude = JSONField(verbose_name='排除规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
                         blank=True, default=[])
     multi = JSONField(verbose_name='多详情规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
-                        blank=True)
+                        blank=True, default=[])
     multi_unique = JSONField(verbose_name='多详情唯一键规则', load_kwargs={'object_pairs_hook': collections.OrderedDict},
-                        blank=True)
+                        blank=True, default=[])
     fresh_time = models.IntegerField(default=2592000, verbose_name='新鲜度维持时间(秒),默认一个月')
 
     def __unicode__(self):
