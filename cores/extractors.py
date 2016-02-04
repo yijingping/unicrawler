@@ -26,13 +26,13 @@ def get_bucket():
     return BUCKET
 
 
-def download_to_oss(image_url):
-    r = requests.get(image_url)
+def download_to_oss(url, path):
+    r = requests.get(url)
     r.close()
-    key = OSS2_CONF["IMAGES_PATH"] + md5(r.content).hexdigest()
+    key = path + md5(r.content).hexdigest()
     bucket = get_bucket()
     bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type')})
-    return 'http://%s/%s' % (OSS2_CONF["IMAGES_DOMAIN"], key)
+    return 'http://%s/%s' % (OSS2_CONF["CDN_DOMAIN"], key)
 
 
 class BaseExtractor(object):
@@ -61,9 +61,30 @@ class ImageExtractor(BaseExtractor):
         if not d:
             return d
         elif isinstance(d, basestring):
-            new_url = download_to_oss(d)
+            new_url = download_to_oss(d, OSS2_CONF["IMAGES_PATH"])
         elif isinstance(d, list):
-            new_url = map(download_to_oss, d)
+            new_url = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"]) for item in d]
+
+        return new_url
+
+
+class VideoExtractor(BaseExtractor):
+    def __init__(self, data):
+        """ data 是视频url,或者视频url的列表
+        :param data:
+        :return: 如果是url,返回新的url; 如果是列表,返回新的url列表
+        """
+        self.data = data
+
+    def extract(self):
+        d = self.data
+        new_url = None
+        if not d:
+            return d
+        elif isinstance(d, basestring):
+            new_url = download_to_oss(d, OSS2_CONF["VIDEOS_PATH"])
+        elif isinstance(d, list):
+            new_url = [download_to_oss(item, OSS2_CONF["VIDEOS_PATH"]) for item in d]
 
         return new_url
 

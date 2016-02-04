@@ -11,8 +11,8 @@ django.setup()
 import json
 from cores.constants import KIND_LIST_URL, KIND_DETAIL_URL
 from django.conf import settings
-from cores.util import get_redis, get_uniqueid, get_link_from_url
-from cores.extractors import XPathExtractor, PythonExtractor, ImageExtractor
+from cores.util import get_redis, get_uniqueid
+from cores.extractors import XPathExtractor, PythonExtractor, ImageExtractor, VideoExtractor
 import logging
 logger = logging.getLogger()
 
@@ -31,6 +31,8 @@ class Extractor(object):
                 extractor = PythonExtractor(rule["data"], res, context=context)
             elif rule["kind"] == "image":
                 extractor = ImageExtractor(res)
+            elif rule["kind"] == "video":
+                extractor = VideoExtractor(res)
 
             res = extractor.extract()
 
