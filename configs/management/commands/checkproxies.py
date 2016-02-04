@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         while True:
             self.check_all_proxies()
-            time.sleep(1)
+            time.sleep(60)
 
     def check_all_proxies(self):
         # 检测新代理
@@ -33,4 +33,3 @@ class Command(BaseCommand):
                     item.speed = time_diff * 1000
                     item.retry = 0
                     item.save()
-                    print 'success:', item.host, item.port
