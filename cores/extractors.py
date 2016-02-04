@@ -4,6 +4,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import requests
 import oss2
+from oss2.exceptions import NotFound
 from copy import copy
 from hashlib import md5
 from lxml import etree
@@ -31,7 +32,12 @@ def download_to_oss(url, path):
     r.close()
     key = path + md5(r.content).hexdigest()
     bucket = get_bucket()
-    bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type')})
+    try:
+        bucket.head_object(key)
+    except NotFound as e:
+        logging.exception(e)
+        bucket.put_object(key, r, headers={'Content-Type': r.headers.get('Content-Type')})
+
     return 'http://%s/%s' % (OSS2_CONF["CDN_DOMAIN"], key)
 
 
