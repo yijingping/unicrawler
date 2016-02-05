@@ -70,7 +70,7 @@ class Extractor(object):
             col = item["key"]
             print col
             col_rules = item["rules"]
-            col_value = self.extract(content, col_rules, {'data': data})
+            col_value = self.extract(content, col_rules, {'data': result})
             result[col] = col_value
 
         # 检查多项详情新鲜度
