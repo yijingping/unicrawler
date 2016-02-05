@@ -51,6 +51,7 @@ class MysqlBackend(object):
         data['update_time'] = str(datetime.now())
         # 清除数据
         data.pop('seed_id', None)
+        data.pop('rule_id', None)
         data.pop('detail_multi', None)
         # 更新或插入数据库
         try:

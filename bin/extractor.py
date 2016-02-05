@@ -38,11 +38,12 @@ class Extractor(object):
 
         return res
 
-    def check_detail_fresh_time(self, unique_url, fresh_time):
+    def check_detail_fresh_time(self, unique_url, data):
+        fresh_time, rule_id = data["detail_fresh_time"], data["rule_id"]
         if fresh_time <= 0:
             return False
         else:
-            key = 'unicrawler:detail_fresh_time:%s' % get_uniqueid(unique_url)
+            key = 'unicrawler:detail_fresh_time:%s:%s' % (rule_id, get_uniqueid(unique_url))
             if self.redis.exists(key):
                 return True
             else:
@@ -61,6 +62,7 @@ class Extractor(object):
         result = {
             "url": data['url'],
             "seed_id": data['seed_id'],
+            "rule_id": data['rule_id'],
             'detail_multi': data['detail_multi']
         }
         rules = data['detail_rules']
@@ -73,7 +75,7 @@ class Extractor(object):
 
         # 检查多项详情新鲜度
         if data['detail_multi']:
-            if self.check_detail_fresh_time(result['url'], data["detail_fresh_time"]):
+            if self.check_detail_fresh_time(result['url'], data):
                 # 未过期,不更新
                 logger.info('检查多项详情未过期,不更新')
             else:
