@@ -3,6 +3,8 @@ __author__ = 'yijingping'
 # 加载django环境
 import sys
 import os
+reload(sys)
+sys.setdefaultencoding('utf8') 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'unicrawler.settings'
 import django
