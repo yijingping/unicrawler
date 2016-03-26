@@ -12,76 +12,15 @@ django.setup()
 
 import time
 import json
-import requests
 from django.conf import settings
 from cores.models import Site
-from configs.models import Proxy
-from random import sample
 from cores.util import get_redis, get_uniqueid
 from cores.constants import KIND_DETAIL_URL
+from cores.downloaders import RequestsDownloaderBackend, SeleniumDownloaderBackend
+from configs.proxies import MysqlProxyBackend
 
 import logging
 logger = logging.getLogger()
-
-
-class RequestsDownloaderBackend(object):
-    headers = [
-        {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36'
-        }
-    ]
-
-    def __init__(self, proxy=None):
-        self.proxy = proxy
-
-    def format_proxies(self):
-        p = self.proxy
-        if self.proxy:
-            if p.user:
-                data = 'http://%s:%s@%s:%s' % (p.user, p.password, p.host, p.port)
-            else:
-                data = 'http://%s:%s' % (p.host, p.port)
-            return {
-                "http": data
-            }
-        else:
-            return None
-
-    def download(self, url):
-        header = sample(self.headers, 1)[0]
-        proxies = self.format_proxies()
-        if isinstance(url, basestring):
-            rsp = requests.get(url, headers=header, proxies=proxies)
-            rsp.close()
-            rsp.encoding = rsp.apparent_encoding
-            return rsp.text
-        elif isinstance(url, dict):
-            link, method, data, data_type = url.get('url'), url.get('method'), url.get('data'), url.get('dataType')
-            req = {'GET': requests.get, 'POST': requests.post}.get(method)
-            rsp = req(link, data=data, headers=header, proxies=proxies)
-            rsp.close()
-            rsp.encoding = rsp.apparent_encoding
-            if data_type == 'json':
-                return rsp.json()
-            else:
-                return rsp.text
-
-
-class BrowserDownloaderBackend(object):
-    def download(self):
-        pass
-
-
-class MysqlProxyBackend(object):
-    def __init__(self):
-        proxy = Proxy.objects.order_by('?').first()
-        self.user = proxy.user
-        self.password = proxy.password
-        self.host = proxy.host
-        self.port = proxy.port
-
-    def __str__(self):
-        return ':'.join([str(self.user), str(self.password), str(self.host), str(self.port)])
 
 
 class Downloader(object):
@@ -146,6 +85,8 @@ class Downloader(object):
                     print '# 未被限制,可以下载'
                     if site_config['browser'] == Site.BROWSER_NONE:
                         browser = RequestsDownloaderBackend(proxy=proxy)
+                    elif site_config['browser'] == Site.BROWSER_NORMAL:
+                        browser = SeleniumDownloaderBackend(proxy=proxy)
                     else:
                         return
 

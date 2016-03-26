@@ -55,7 +55,7 @@ class BaseExtractor(object):
 
 class ImageExtractor(BaseExtractor):
     def __init__(self, data):
-        """ data 是图片url,或者图片url的列表
+        """ data 是图片url,或者图片url的列表,或者包含img标签的内容
         :param data:
         :return: 如果是url,返回新的url; 如果是列表,返回新的url列表
         """
@@ -63,15 +63,38 @@ class ImageExtractor(BaseExtractor):
 
     def extract(self):
         d = self.data
-        new_url = None
+        res = None
         if not d:
             return d
         elif isinstance(d, basestring):
-            new_url = download_to_oss(d, OSS2_CONF["IMAGES_PATH"])
+            if d.startswith('http'):
+                ## 内容是图片地址
+                res = download_to_oss(d, OSS2_CONF["IMAGES_PATH"])
+            else:
+                ## 内容是包含图片的文字
+                htmlparser = etree.HTMLParser()
+                tree = etree.parse(StringIO(d), htmlparser)
+                # 找出所有图片src
+                srcs = tree.xpath("//img[starts-with(@src,'http')]/@src")
+                data_srcs = tree.xpath("//img[starts-with(@data-src,'http')]/@data-src")
+                srcs = list(set(srcs + data_srcs))
+                # 下载并传到OSS中
+                new_srcs = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"]) for item in srcs]
+                # 替换掉原文中的图片src
+                res = self.replace_all(d, srcs, new_srcs)
         elif isinstance(d, list):
-            new_url = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"]) for item in d]
+            res = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"]) for item in d]
 
-        return new_url
+        return res
+
+
+    def replace_all(self, content, srcs, new_srcs):
+        """ 将content中的srcs全部替换成new_srcs
+        """
+        replaces = zip(srcs, new_srcs)
+        for src, new_src in replaces:
+            content = content.replace(src.split('?')[0], new_src)
+        return content
 
 
 class VideoExtractor(BaseExtractor):
