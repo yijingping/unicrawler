@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 __author__ = 'yijingping'
+import time
 import requests
 import platform
 from random import sample
@@ -112,7 +113,7 @@ class SeleniumDownloaderBackend(object):
         #firefox_profile.set_preference('permissions.default.image', 2)
         #firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
         # 代理
-        if proxy.is_valid():
+        if proxy and proxy.is_valid():
             myProxy = '%s:%s' % (proxy.host, proxy.port)
             ff_proxy = Proxy({
                 'proxyType': ProxyType.MANUAL,
@@ -131,6 +132,7 @@ class SeleniumDownloaderBackend(object):
         browser = self.browser
         # 访问首页, 输入wchatid, 点击查询
         browser.get(url)
+        time.sleep(3)
         js = """
             return document.documentElement.innerHTML;
         """

@@ -85,12 +85,13 @@ class Downloader(object):
                     print '# 未被限制,可以下载'
                     if site_config['browser'] == Site.BROWSER_NONE:
                         browser = RequestsDownloaderBackend(proxy=proxy)
+                        data['body'] = browser.download(data["url"])
                     elif site_config['browser'] == Site.BROWSER_NORMAL:
-                        browser = SeleniumDownloaderBackend(proxy=proxy)
+                        with SeleniumDownloaderBackend(proxy=proxy) as browser:
+                            data['body'] = browser.download(data["url"])
                     else:
                         return
 
-                    data['body'] = browser.download(data["url"])
                     r.lpush(settings.CRAWLER_CONFIG["extractor"], json.dumps(data))
                     logger.debug(data)
             except Exception as e:
