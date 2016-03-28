@@ -43,6 +43,7 @@ class RequestsDownloaderBackend(object):
     def download(self, url):
         header = sample(self.headers, 1)[0]
         proxies = self.format_proxies()
+        #print url
         if isinstance(url, basestring):
             rsp = requests.get(url, headers=header, proxies=proxies)
             rsp.close()
@@ -51,7 +52,10 @@ class RequestsDownloaderBackend(object):
         elif isinstance(url, dict):
             link, method, data, data_type = url.get('url'), url.get('method'), url.get('data'), url.get('dataType')
             req = {'GET': requests.get, 'POST': requests.post}.get(method)
-            rsp = req(link, data=data, headers=header, proxies=proxies)
+            if method == 'GET':
+                rsp = req(link, params=data, headers=header, proxies=proxies)
+            elif method == 'POST':
+                rsp = req(link, data=data, headers=header, proxies=proxies)
             rsp.close()
             rsp.encoding = rsp.apparent_encoding
             if data_type == 'json':

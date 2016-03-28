@@ -58,6 +58,7 @@ class MysqlBackend(BaseProcessorBackend):
         data.pop('rule_id', None)
         data.pop('detail_multi', None)
         # 更新或插入数据库
+        #print data
         try:
             # try update
             affected = self.update(data, {'uniqueid': data['uniqueid']})

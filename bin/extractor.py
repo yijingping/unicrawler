@@ -26,17 +26,20 @@ class Extractor(object):
     def extract(self, content, rules, context):
         res = content
         for rule in rules:
-            extractor = None
-            if rule["kind"] == "xpath":
-                extractor = XPathExtractor(res, rule["data"])
-            elif rule["kind"] == "python":
-                extractor = PythonExtractor(rule["data"], res, context=context)
-            elif rule["kind"] == "image":
-                extractor = ImageExtractor(res)
-            elif rule["kind"] == "video":
-                extractor = VideoExtractor(res)
+            try:
+                extractor = None
+                if rule["kind"] == "xpath":
+                    extractor = XPathExtractor(res, rule["data"])
+                elif rule["kind"] == "python":
+                    extractor = PythonExtractor(rule["data"], res, context=context)
+                elif rule["kind"] == "image":
+                    extractor = ImageExtractor(res)
+                elif rule["kind"] == "video":
+                    extractor = VideoExtractor(res)
 
-            res = extractor.extract()
+                res = extractor.extract()
+            except Exception as e:
+                logger.exception(e)
 
         return res
 
