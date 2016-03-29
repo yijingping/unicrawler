@@ -77,20 +77,17 @@ class Extractor(object):
             col_rules = item["rules"]
             col_value = self.extract(content, col_rules, {'data': result})
             result[col] = col_value
+            # 提前检查多项详情新鲜度
+            if col == 'url':
+                if data['detail_multi']:
+                    if self.check_detail_fresh_time(result['url'], data):
+                        # 未过期,不更新
+                        logger.debug('检查多项详情未过期,不更新')
+                        return
 
-        # 检查多项详情新鲜度
-        if data['detail_multi']:
-            if self.check_detail_fresh_time(result['url'], data):
-                # 未过期,不更新
-                logger.info('检查多项详情未过期,不更新')
-            else:
-                # 已过期,更新
-                self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
-                logger.debug('extracted:%s' % result)
-        else:
-            # 已过期,更新
-            self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
-            logger.debug('extracted:%s' % result)
+        # 更新
+        self.redis.lpush(settings.CRAWLER_CONFIG["processor"], json.dumps(result))
+        logger.debug('extracted:%s' % result)
 
     def run(self):
         r = get_redis()
