@@ -6,6 +6,7 @@ from abc import abstractmethod
 import _mysql
 import torndb
 from datetime import datetime
+from django.db import transaction
 from django.utils.encoding import smart_str, smart_unicode
 from django.db import models
 from cores.util import get_uniqueid
@@ -125,9 +126,12 @@ class DjangoModelBackend(BaseProcessorBackend):
         self._class = modelclass
 
     def process(self, params):
+        # 手动commit, 确保获取最新的数据
+        transaction.enter_transaction_management()
+        transaction.commit()
+
         C = self._class
         params['uniqueid'] = get_uniqueid('%s:%s' % (params['wechat_id'], params['title']))
-        C.objects.update_or_create(uniqueid=params['uniqueid'], defaults=params)
 
         # 加上默认值
         data = params.copy()
