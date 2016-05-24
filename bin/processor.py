@@ -15,7 +15,7 @@ import json
 from django.conf import settings
 from cores.models import Seed
 from cores.util import get_redis
-from cores.processors import MysqlBackend, DjangoModelBackend, MongoDBBackend
+from cores.processors import MysqlBackend, PostgresBackend, DjangoModelBackend, MongoDBBackend
 
 import logging
 logger = logging.getLogger()
@@ -41,6 +41,8 @@ class Processor():
                         backend = MysqlBackend(config)
                     elif config["kind"] == "mongodb":
                         backend = MongoDBBackend(config)
+                    elif config["kind"] == "postgres":
+                        backend = PostgresBackend(config)
                     elif config["kind"] == "DjangoModel":
                         backend = DjangoModelBackend(config)
 

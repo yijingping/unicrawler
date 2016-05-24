@@ -11,7 +11,6 @@ import django
 django.setup()
 
 import json
-from django.db import transaction
 from cores.models import Seed, IndexRule, DetailRule
 from cores.constants import KIND_LIST_URL
 from django.conf import settings
@@ -26,9 +25,6 @@ class Scheduler(object):
     def run(self):
         r = get_redis()
         while True:
-            # 手动commit, 确保获取最新的数据
-            transaction.enter_transaction_management()
-            transaction.commit()
             now = datetime.now()
             for item in Seed.objects.filter(status=Seed.STATUS_ENABLE).order_by('-weight'):
                 rules = IndexRule.objects.filter(seed=item, status=IndexRule.STATUS_ENABLE, next_crawl_time__lte=now)
