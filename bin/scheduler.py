@@ -30,7 +30,7 @@ class Scheduler(object):
                 rules = IndexRule.objects.filter(seed=item, status=IndexRule.STATUS_ENABLE, next_crawl_time__lte=now)
                 for rule in rules:
                     try:
-                        deital_rule = DetailRule.objects.get(index_rule=rule)
+                        detail_rule = DetailRule.objects.get(index_rule=rule)
                     except DetailRule.DoesNotExist as e:
                         print e
                         continue
@@ -44,11 +44,11 @@ class Scheduler(object):
                         'site_config': rule.site.get_config(),
                         'list_rules': rule.list_rules,
                         'next_url_rules': rule.next_url_rules,
-                        'detail_rules': deital_rule.data,
-                        'detail_exclude': deital_rule.exclude,
-                        'detail_multi': deital_rule.multi,
-                        'detail_multi_unique': deital_rule.multi_unique,
-                        'detail_fresh_time': deital_rule.fresh_time,
+                        'detail_rules': detail_rule.data,
+                        'detail_exclude': detail_rule.exclude,
+                        'detail_multi': detail_rule.multi,
+                        'detail_multi_unique': detail_rule.multi_unique,
+                        'detail_fresh_time': detail_rule.fresh_time,
                         'unique_key': item.data[0]["unique_key"]
                     }
                     for url in rule.url:
