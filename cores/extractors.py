@@ -27,7 +27,7 @@ def get_bucket():
     return BUCKET
 
 
-def download_to_oss(url, path, timeout=180):
+def download_to_oss(url, path, timeout=3600):
     r = requests.get(url, timeout=timeout)
     r.close()
     key = path + md5(r.content).hexdigest()
@@ -69,7 +69,7 @@ class ImageExtractor(BaseExtractor):
         elif isinstance(d, basestring):
             if d.startswith('http'):
                 ## 内容是图片地址
-                res = download_to_oss(d, OSS2_CONF["IMAGES_PATH"], timeout=20)
+                res = download_to_oss(d, OSS2_CONF["IMAGES_PATH"], timeout=120)
             else:
                 ## 内容是包含图片的文字
                 htmlparser = etree.HTMLParser()
@@ -79,11 +79,11 @@ class ImageExtractor(BaseExtractor):
                 data_srcs = tree.xpath("//img[starts-with(@data-src,'http')]/@data-src")
                 srcs = list(set(srcs + data_srcs))
                 # 下载并传到OSS中
-                new_srcs = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"], timeout=20) for item in srcs]
+                new_srcs = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"], timeout=120) for item in srcs]
                 # 替换掉原文中的图片src
                 res = self.replace_all(d, srcs, new_srcs)
         elif isinstance(d, list):
-            res = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"], timeout=20) for item in d]
+            res = [download_to_oss(item, OSS2_CONF["IMAGES_PATH"], timeout=120) for item in d]
 
         return res
 

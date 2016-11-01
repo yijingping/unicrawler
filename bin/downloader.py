@@ -50,7 +50,7 @@ class Downloader(object):
         if fresh_time <= 0:
             return False
         else:
-            unique_value = ''.join([data.get(item) for item in unique_key])
+            unique_value = ''.join([str(data.get(item)) for item in unique_key])
             key = 'unicrawler:detail_fresh_time:%s:%s' % (rule_id, get_uniqueid(unique_value))
             if self.redis.exists(key):
                 return True
