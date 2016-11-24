@@ -10,5 +10,5 @@ oss2==2.0.5
 selenium==2.52.0
 PyVirtualDisplay==0.1.5
 psycopg2==2.6.1
-
+sqlalchemy=1.1.4
 
